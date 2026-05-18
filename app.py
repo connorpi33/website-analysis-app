@@ -16,13 +16,58 @@ uploaded_file = st.file_uploader(
     type=["csv"]
 )
 
+def detect_tech(html, headers):
+    html_lower = html.lower()
+    tech = []
+
+    if "wp-content" in html_lower or "wordpress" in html_lower:
+        tech.append("WordPress")
+
+    if "shopify" in html_lower or "cdn.shopify.com" in html_lower:
+        tech.append("Shopify")
+
+    if "wix.com" in html_lower or "wixstatic.com" in html_lower:
+        tech.append("Wix")
+
+    if "squarespace" in html_lower:
+        tech.append("Squarespace")
+
+    if "react" in html_lower or "__next_data__" in html_lower:
+        tech.append("React / Next.js")
+
+    if "vue" in html_lower:
+        tech.append("Vue.js")
+
+    if "angular" in html_lower:
+        tech.append("Angular")
+
+    if "googletagmanager.com" in html_lower:
+        tech.append("Google Tag Manager")
+
+    if "google-analytics.com" in html_lower or "gtag/js" in html_lower:
+        tech.append("Google Analytics")
+
+    if "hubspot" in html_lower:
+        tech.append("HubSpot")
+
+    if "cloudflare" in str(headers).lower():
+        tech.append("Cloudflare")
+
+    if "server" in headers:
+        server = headers.get("server", "")
+        if server:
+            tech.append(f"Server: {server}")
+
+    return ", ".join(sorted(set(tech))) if tech else "Unknown"
+
 def analyze_domain(domain):
     result = {
         "domain": domain,
         "status": "",
         "title": "",
         "description": "",
-        "site_summary": ""
+        "site_summary": "",
+        "tech_stack": ""
     }
 
     try:
@@ -46,6 +91,7 @@ def analyze_domain(domain):
 
         result["title"] = title
         result["description"] = description
+        result["tech_stack"] = detect_tech(response.text, response.headers)
 
         if description:
             result["site_summary"] = description
@@ -56,6 +102,7 @@ def analyze_domain(domain):
 
     except Exception as e:
         result["status"] = f"Error: {str(e)}"
+        result["tech_stack"] = "Unknown"
 
     return result
 
