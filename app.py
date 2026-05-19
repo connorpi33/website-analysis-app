@@ -3,6 +3,9 @@ import pandas as pd
 import requests
 import whois
 from bs4 import BeautifulSoup
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest
+from google.oauth2 import service_account
 
 st.set_page_config(
     page_title="Domain Intelligence Analyzer",
@@ -16,6 +19,49 @@ uploaded_file = st.file_uploader(
     "Upload a CSV containing a column named 'domain'",
     type=["csv"]
 )
+
+def get_ga4_traffic(property_id):
+    try:
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"]
+        )
+
+        client = BetaAnalyticsDataClient(credentials=credentials)
+
+        request = RunReportRequest(
+            property=f"properties/{property_id}",
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            metrics=[
+                Metric(name="activeUsers"),
+                Metric(name="sessions"),
+                Metric(name="screenPageViews")
+            ],
+        )
+
+        response = client.run_report(request)
+
+        if not response.rows:
+            return {
+                "ga4_active_users": 0,
+                "ga4_sessions": 0,
+                "ga4_pageviews": 0
+            }
+
+        row = response.rows[0]
+
+        return {
+            "ga4_active_users": row.metric_values[0].value,
+            "ga4_sessions": row.metric_values[1].value,
+            "ga4_pageviews": row.metric_values[2].value
+        }
+
+    except Exception as e:
+        return {
+            "ga4_active_users": "Unavailable",
+            "ga4_sessions": "Unavailable",
+            "ga4_pageviews": f"Error: {str(e)}"
+        }
+
 def get_whois_details(domain):
     details = {
         "registrar": "",
@@ -81,7 +127,7 @@ def detect_tech(html, headers):
 
     return ", ".join(sorted(set(tech))) if tech else "Unknown"
 
-def analyze_domain(domain):
+def analyze_domain(domain, row=None):
     result = {
     "domain": domain,
     "status": "",
@@ -92,7 +138,10 @@ def analyze_domain(domain):
     "registrar": "",
     "creation_date": "",
     "expiration_date": "",
-    "whois_country": ""
+    "whois_country": "",
+    "ga4_active_users": "",
+    "ga4_sessions": "",
+    "ga4_pageviews": ""
 }
 
     try:
@@ -126,6 +175,17 @@ def analyze_domain(domain):
         result["expiration_date"] = whois_details["expiration_date"]
         result["whois_country"] = whois_details["whois_country"]
 
+        # GA4 SECTION
+        ga4_property_id = row.get("ga4_property_id", "") if row is not None else ""
+
+        if ga4_property_id:
+
+            ga4_details = get_ga4_traffic(str(ga4_property_id))
+
+            result["ga4_active_users"] = ga4_details["ga4_active_users"]
+            result["ga4_sessions"] = ga4_details["ga4_sessions"]
+            result["ga4_pageviews"] = ga4_details["ga4_pageviews"]
+
         if description:
             result["site_summary"] = description
         elif title:
@@ -148,8 +208,8 @@ if uploaded_file:
         results = []
         progress = st.progress(0)
 
-        for i, domain in enumerate(df["domain"]):
-            results.append(analyze_domain(domain))
+        for i, row in df.iterrows():
+            results.append(analyze_domain(row["domain"], row))
             progress.progress((i + 1) / len(df))
 
         results_df = pd.DataFrame(results)
