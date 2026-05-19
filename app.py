@@ -117,7 +117,12 @@ def analyze_domain(domain):
         result["title"] = title
         result["description"] = description
         result["tech_stack"] = detect_tech(response.text, response.headers)
+whois_details = get_whois_details(domain)
 
+result["registrar"] = whois_details["registrar"]
+result["creation_date"] = whois_details["creation_date"]
+result["expiration_date"] = whois_details["expiration_date"]
+result["whois_country"] = whois_details["whois_country"]
         if description:
             result["site_summary"] = description
         elif title:
