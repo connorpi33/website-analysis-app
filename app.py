@@ -83,17 +83,17 @@ def detect_tech(html, headers):
 
 def analyze_domain(domain):
     result = {
-        "domain": domain,
-        "status": "",
-        "title": "",
-        "description": "",
-        "site_summary": "",
-        "tech_stack": ""
-        "registrar": "",
-        "creation_date": "",
-        "expiration_date": "",
-        "whois_country": ""
-    }
+    "domain": domain,
+    "status": "",
+    "title": "",
+    "description": "",
+    "site_summary": "",
+    "tech_stack": "",
+    "registrar": "",
+    "creation_date": "",
+    "expiration_date": "",
+    "whois_country": ""
+}
 
     try:
         domain = str(domain).replace("https://", "").replace("http://", "").strip("/")
