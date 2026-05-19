@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import whois
 from bs4 import BeautifulSoup
 
 st.set_page_config(
@@ -15,6 +16,26 @@ uploaded_file = st.file_uploader(
     "Upload a CSV containing a column named 'domain'",
     type=["csv"]
 )
+def get_whois_details(domain):
+    details = {
+        "registrar": "",
+        "creation_date": "",
+        "expiration_date": "",
+        "whois_country": ""
+    }
+
+    try:
+        w = whois.whois(domain)
+
+        details["registrar"] = w.registrar
+        details["creation_date"] = str(w.creation_date)
+        details["expiration_date"] = str(w.expiration_date)
+        details["whois_country"] = w.country
+
+    except Exception as e:
+        details["registrar"] = "Unavailable"
+
+    return details
 
 def detect_tech(html, headers):
     html_lower = html.lower()
@@ -68,6 +89,10 @@ def analyze_domain(domain):
         "description": "",
         "site_summary": "",
         "tech_stack": ""
+        "registrar": "",
+        "creation_date": "",
+        "expiration_date": "",
+        "whois_country": ""
     }
 
     try:
