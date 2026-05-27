@@ -178,13 +178,18 @@ def analyze_domain(domain, row=None):
         # GA4 SECTION
         ga4_property_id = row.get("ga4_property_id", "") if row is not None else ""
 
-        if ga4_property_id:
+        if pd.notna(ga4_property_id) and str(ga4_property_id).strip() != "":
+            ga4_property_id = str(int(float(ga4_property_id)))
 
-            ga4_details = get_ga4_traffic(str(ga4_property_id))
+            ga4_details = get_ga4_traffic(ga4_property_id)
 
             result["ga4_active_users"] = ga4_details["ga4_active_users"]
             result["ga4_sessions"] = ga4_details["ga4_sessions"]
             result["ga4_pageviews"] = ga4_details["ga4_pageviews"]
+        else:
+            result["ga4_active_users"] = "No GA4 property ID"
+            result["ga4_sessions"] = "No GA4 property ID"
+            result["ga4_pageviews"] = "No GA4 property ID"
 
         if description:
             result["site_summary"] = description
