@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest
 from google.oauth2 import service_account
-from openai import OpenAI
+from anthropic import Anthropic
 
 st.set_page_config(
     page_title="Domain Intelligence Analyzer",
@@ -23,7 +23,7 @@ uploaded_file = st.file_uploader(
 
 def generate_ai_assessment(result):
     try:
-        client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        client = Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
 
         prompt = f"""
         Analyze this domain using the available data.
@@ -45,16 +45,16 @@ def generate_ai_assessment(result):
         Keep it to 2-3 sentences.
         """
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = client.messages.create(
+            model="claude-3-5-haiku-latest",
+            max_tokens=200,
+            temperature=0.3,
             messages=[
-                {"role": "system", "content": "You are a domain intelligence analyst."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
-        return response.choices[0].message.content
+        return response.content[0].text
 
     except Exception as e:
         return f"AI assessment unavailable: {str(e)}"
