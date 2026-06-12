@@ -5,4 +5,4 @@ beautifulsoup4
 python-whois
 google-analytics-data
 google-auth
-openai
+anthropic
