@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Metric, RunReportRequest
 from google.oauth2 import service_account
+from openai import OpenAI
 
 st.set_page_config(
     page_title="Domain Intelligence Analyzer",
@@ -19,6 +20,44 @@ uploaded_file = st.file_uploader(
     "Upload a CSV containing a column named 'domain'",
     type=["csv"]
 )
+
+def generate_ai_assessment(result):
+    try:
+        client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+        prompt = f"""
+        Analyze this domain using the available data.
+
+        Domain: {result.get("domain")}
+        Title: {result.get("title")}
+        Description: {result.get("description")}
+        Tech stack: {result.get("tech_stack")}
+        Registrar: {result.get("registrar")}
+        Creation date: {result.get("creation_date")}
+        Expiration date: {result.get("expiration_date")}
+        WHOIS country: {result.get("whois_country")}
+        GA4 active users: {result.get("ga4_active_users")}
+        GA4 sessions: {result.get("ga4_sessions")}
+        GA4 pageviews: {result.get("ga4_pageviews")}
+
+        Write a concise plain-English assessment of what this domain appears to be,
+        whether anything looks notable, and what action someone should take next.
+        Keep it to 2-3 sentences.
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a domain intelligence analyst."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"AI assessment unavailable: {str(e)}"
 
 def get_ga4_traffic(property_id):
     try:
@@ -127,6 +166,7 @@ def detect_tech(html, headers):
 
     return ", ".join(sorted(set(tech))) if tech else "Unknown"
 
+# Result Dictionary
 def analyze_domain(domain, row=None):
     result = {
     "domain": domain,
@@ -142,6 +182,7 @@ def analyze_domain(domain, row=None):
     "ga4_active_users": "",
     "ga4_sessions": "",
     "ga4_pageviews": ""
+    "ai_assessment": ""
 }
 
     try:
@@ -198,6 +239,8 @@ def analyze_domain(domain, row=None):
         else:
             result["site_summary"] = "No clear site description found."
 
+        result["ai_assessment"] = generate_ai_assessment(result)
+    
     except Exception as e:
         result["status"] = f"Error: {str(e)}"
         result["tech_stack"] = "Unknown"
