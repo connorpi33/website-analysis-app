@@ -46,7 +46,7 @@ def generate_ai_assessment(result):
         """
 
         response = client.messages.create(
-            model="claude-3-5-haiku-latest",
+            model="claude-3-5-haiku-20241022",
             max_tokens=200,
             temperature=0.3,
             messages=[
