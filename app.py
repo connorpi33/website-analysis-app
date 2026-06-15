@@ -181,7 +181,7 @@ def analyze_domain(domain, row=None):
     "whois_country": "",
     "ga4_active_users": "",
     "ga4_sessions": "",
-    "ga4_pageviews": ""
+    "ga4_pageviews": "",
     "ai_assessment": ""
 }
 
