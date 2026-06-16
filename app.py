@@ -46,7 +46,7 @@ def generate_ai_assessment(result):
         """
 
         response = client.messages.create(
-            model="claude-3-sonnet-20240229",
+            model="claude-sonnet-4-5",
             max_tokens=200,
             temperature=0.3,
             messages=[
